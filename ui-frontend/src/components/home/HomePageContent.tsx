@@ -59,9 +59,14 @@ export function HomepageContent() {
     }
 
     const login = async () => {
+        console.log("Is Login Redirect:",oktaAuth.isLoginRedirect() )
         if (oktaAuth.isLoginRedirect()) {
+            oktaAuth.options.pkce = true;
+            const tokens = await oktaAuth.token.parseFromUrl();
+            console.log("Tokens",tokens);
             await oktaAuth.handleLoginRedirect();
         } else if (!await oktaAuth.isAuthenticated()) {
+            console.log("Is Authenticated:",await oktaAuth.isAuthenticated() )
             // Start the browser based oidc flow, then parse tokens from the redirect callback url
             oktaAuth.signInWithRedirect();
         }
@@ -120,9 +125,10 @@ export function HomepageContent() {
 
     useEffect(() => {
         login().then(r => {
+            secinfo().then(r => {
+            });
         });
-        secinfo().then(r => {
-        });
+        
     });
 
     return (
