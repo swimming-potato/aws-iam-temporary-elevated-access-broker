@@ -15,7 +15,7 @@ const AppLayout: FunctionComponent = ( {children} ) => {
   const SideNavigation = useMemo(() => {
 
     return <SideNavigationBase
-        header={{text: 'Demo', href: '/'}}
+        header={{text: 'Menu', href: '/'}}
         items={
           getNavigation()
         }

@@ -3,7 +3,9 @@ import {ColumnLayout, Container, Box, Button} from "aws-northstar";
 import Stack from "aws-northstar/layouts/Stack";
 import './styles.css';
 import TEA from "./TEA.png";
-import {useOktaAuth} from "@okta/okta-react";
+import { signInWithRedirect,fetchAuthSession, JWT } from "aws-amplify/auth";
+import { Hub } from "aws-amplify/utils";
+
 import {IUserInfo} from "../../interfaces";
 import {useDispatch} from "react-redux";
 
@@ -22,24 +24,27 @@ const Homepage: FunctionComponent = () => {
 // The content in the main content area of the App layout
 export function HomepageContent() {
 
-    const [request, setRequest] = useState(false);
-    const [review, setReview] = useState(false);
-    const [audit, setAudit] = useState(false);
-
-    const {oktaAuth} = useOktaAuth();
+		const [user, setUser] = useState<IUserInfo | undefined>(undefined);
+		const [error, setError] = useState<unknown>(null);
 
     const dispatch = useDispatch();
     const history = useHistory();
 
-    function createAccountMap(groups: string[]) {
+    function createReadPermissions(groups: string[]) {
         let accountMap = new Map();
+				let permissions = {
+					requester: false,
+					reviewer: false,
+					auditor: false,
+				};
+				console.log("Groups",groups);
         for (var group of groups) {
             if (group === 'aws-temp#Reviewer') {
-                setReview(true);
-                ApiHandler.reviewer = true;
+								ApiHandler.reviewer = permissions.reviewer = true;
+								console.log("Groups",group);
             } else if (group === 'aws-temp#Auditor') {
-                setAudit(true)
-                ApiHandler.auditor = true;
+                ApiHandler.auditor = permissions.auditor = true;
+								console.log("Groups",group);
             } else {
                 let words = group.split('#');
                 let account = words[2]
@@ -51,85 +56,103 @@ export function HomepageContent() {
                     roles.push(role);
                     accountMap.set(account, roles)
                 }
-                setRequest(true);
-                ApiHandler.requester = true;
+                
+                ApiHandler.requester = permissions.requester = true;
             }
         }
-        return accountMap;
+        return {
+					accountMap,
+					...permissions,
+				};
     }
 
-    const login = async () => {
-        console.log("Is Login Redirect:",oktaAuth.isLoginRedirect() )
-        if (oktaAuth.isLoginRedirect()) {
-            oktaAuth.options.pkce = true;
-            const tokens = await oktaAuth.token.parseFromUrl();
-            console.log("Tokens",tokens);
-            await oktaAuth.handleLoginRedirect();
-        } else if (!await oktaAuth.isAuthenticated()) {
-            console.log("Is Authenticated:",await oktaAuth.isAuthenticated() )
-            // Start the browser based oidc flow, then parse tokens from the redirect callback url
-            oktaAuth.signInWithRedirect();
-        }
-    }
+    useEffect(() => {
+			const unsubscribe = Hub.listen("auth", ({ payload }) => {
+				console.log("Handling event", JSON.stringify(payload))
+				switch (payload.event) {
+					case "signInWithRedirect":
+						getUser();
+						break;
+					case 'tokenRefresh':
+						getUser();
+						break;
+					case "signInWithRedirect_failure":
+						setError("An error has occurred during the OAuth flow.");
+						break;
+				}
+			});
+	
+			getUser();
+	
+			return unsubscribe;
+		}, []);
+	
+		const getUser = async (): Promise<void> => {
+			try {
+				const session = await fetchAuthSession()
+				
+				const idToken = session.tokens?.idToken;
+				const accessToken = session.tokens?.accessToken;
+				
+				if(session.tokens?.idToken){
+					const groups = session.tokens.idToken.payload['cognito:groups'] as string[];
+					
+					const userInfo: IUserInfo =  {
+						...createReadPermissions(groups ?? []),
+						token: "",
+						user: "",
+					} 
 
-    const secinfo = async () => {
+					userInfo.user = `${idToken?.payload['email']}` ?? "" as string;
+			
 
-        const userInfo: IUserInfo = {
-            token: "",
-            user: "",
+          const authorization_value1 = 'Bearer '.concat(accessToken?.toString() ??  "");
+          const authorization_value2 = authorization_value1.concat(' ');
+          const authorization_value3 = authorization_value2.concat(idToken?.toString() ?? "");
+    
+          userInfo.token = authorization_value3;
+            
+          dispatch(storeUserInfoAction(userInfo));
+					setUser(userInfo);
+					return;
 
-            requester: false,
-            reviewer: false,
-            auditor: false,
+				}
+			} catch (error) {
+				console.error(error);
+				console.log("Not signed in");
+			}
 
-            accountMap: new Map([])
-        }
+			setUser(undefined);
+			return
 
-        const claims = await oktaAuth.getUser();
-        userInfo.user = claims.email ? claims.email : "";
-        userInfo.accountMap = createAccountMap(claims.groups);
-
-        const tokenManager = oktaAuth.tokenManager;
-        const accessToken = await tokenManager.get('accessToken');
-        const idToken = await tokenManager.get('idToken');
-        if ("accessToken" in accessToken && "idToken" in idToken) {
-            const authorization_value1 = 'Bearer '.concat(accessToken.accessToken ? accessToken.accessToken : "");
-            const authorization_value2 = authorization_value1.concat(' ');
-            const authorization_value3 = authorization_value2.concat(idToken.idToken ? idToken.idToken : "");
-
-            userInfo.token = authorization_value3;
-        }
-
-        userInfo.requester = request;
-        userInfo.reviewer = review;
-        userInfo.auditor = audit;
-        dispatch(storeUserInfoAction(userInfo));
-    }
-
+		};
+	
     const onOpenClick = () => {
-        history.push(getLink());
+			if(user)
+			 history.push(getLink());
+			else
+				signInWithRedirect();
     }
 
     const getLink = () => {
 
-        if (request) {
+			if(user){
+        if (user?.requester) {
             return "/Request-dashboard";
-        } else if (review) {
+        } else if (user?.reviewer) {
             return "/Review-dashboard";
-        } else if (audit) {
+        } else if (user.auditor) {
             return "/Audit-dashboard"
-        } else {
-            return "/"
-        }
+				}
+			}
+
+      return "/"
+        
     }
 
-    useEffect(() => {
-        login().then(r => {
-            secinfo().then(r => {
-            });
-        });
-        
-    });
+		useEffect(() => {
+			onOpenClick();
+		});
 
     return (
         <div>
@@ -317,5 +340,4 @@ export function HomepageContent() {
 }
 
 
-export default Homepage;
 
