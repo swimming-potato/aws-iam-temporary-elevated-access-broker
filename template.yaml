@@ -28,6 +28,7 @@ Metadata:
           - SearchPrefix
           - ReviewerGroup
           - AuditorGroup
+          - GroupClaimName
       - Label:
           default: API Gateway Setup
         Parameters:
@@ -38,6 +39,7 @@ Metadata:
           - ClientId
           - JWTIssuer
           - Audience
+          - JWKSUri
       - Label:
           default: Notifications Setup
         Parameters:
@@ -105,6 +107,10 @@ Parameters:
     Description: Group for determining Auditor eligibility
     Type: String
     Default: aws-temp#Auditor
+  GroupClaimName:
+    Description: Name of the claim that will store groups information
+    Type: String
+    Default: cognito:groups
   RetentionInDays:
     Type: String
     Description: The number of days to retain the log events
@@ -158,6 +164,12 @@ Parameters:
       https://dev-1234.oktapreview.com/oauth2/default.
     AllowedPattern: '(?i)https://(.*)'
     ConstraintDescription: Enter a valid HTTPS URL
+  JWKSUri:
+    Type: String
+    Description: >-
+      This is the URL of the locations of JWKS Keys to verify the signature of Access and Id Token.
+    AllowedPattern: '(?i)https://(.*)'
+    ConstraintDescription: Enter a valid HTTPS URL
   ClientId:
     Type: String
     Description: >-
@@ -182,7 +194,7 @@ Resources:
     Type: 'AWS::S3::Bucket'
     DeletionPolicy: Retain
     Properties:
-      BucketName: !Sub '${AWS::Region}-${AWS::AccountId}-cf-static-resources'
+      BucketName: !Sub '${AWS::Region}-${AWS::AccountId}-cf-static-resources-cognito'
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
@@ -667,7 +679,7 @@ Resources:
       MemorySize: 128
       Timeout: 5
       Role: !Sub ${LambdaEdgeFunctionRole.Arn}
-      Runtime: nodejs14.x
+      Runtime: nodejs20.x
       TracingConfig:
         Mode: Active
     DependsOn:
@@ -719,7 +731,7 @@ Resources:
     Properties:
       Code: okta-authorizer/
       Handler: index.handler
-      Runtime: nodejs14.x
+      Runtime: nodejs20.x
       FunctionName: !Sub '${AWS::StackName}-custom_authorizer'
       MemorySize: 1024
       Timeout: 30
@@ -732,6 +744,7 @@ Resources:
             arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}
           api_stage: !Ref Stage
           jwt_issuer: !Ref JWTIssuer
+          jwks_uri: !Ref JWKSUri
           clientId: !Ref ClientId
           aud: !Ref Audience
       TracingConfig:
@@ -772,6 +785,7 @@ Resources:
       Environment:
         Variables:
           db_table: !Ref DBTableName
+          group_claim_name: !Ref GroupClaimName
       TracingConfig:
         Mode: Active
       Layers:
@@ -793,6 +807,7 @@ Resources:
       Environment:
         Variables:
           db_table: !Ref DBTableName
+          group_claim_name: !Ref GroupClaimName
           reviewer_group: !Ref ReviewerGroup
       TracingConfig:
         Mode: Active
@@ -815,6 +830,7 @@ Resources:
       Environment:
         Variables:
           db_table: !Ref DBTableName
+          group_claim_name: !Ref GroupClaimName
       TracingConfig:
         Mode: Active
       Layers:
@@ -836,6 +852,7 @@ Resources:
       Environment:
         Variables:
           db_table: !Ref DBTableName
+          group_claim_name: !Ref GroupClaimName
       TracingConfig:
         Mode: Active
       Layers:
@@ -857,6 +874,7 @@ Resources:
       Environment:
         Variables:
           db_table: !Ref DBTableName
+          group_claim_name: !Ref GroupClaimName
           reviewer_group: !Ref ReviewerGroup
       TracingConfig:
         Mode: Active
@@ -879,6 +897,7 @@ Resources:
       Environment:
         Variables:
           db_table: !Ref DBTableName
+          group_claim_name: !Ref GroupClaimName
           auditor_group: !Ref AuditorGroup
       TracingConfig:
         Mode: Active
@@ -899,6 +918,7 @@ Resources:
         Variables:
           reviewer_group: !Ref ReviewerGroup
           db_table: !Ref DBTableName
+          group_claim_name: !Ref GroupClaimName
       Role: !GetAtt 
         - LambdaDBWriteRole
         - Arn
@@ -921,6 +941,7 @@ Resources:
         Variables:
           reviewer_group: !Ref ReviewerGroup
           db_table: !Ref DBTableName
+          group_claim_name: !Ref GroupClaimName
       Role: !GetAtt 
         - LambdaDBWriteRole
         - Arn
@@ -943,6 +964,7 @@ Resources:
         Variables:
           search_prefix: !Ref SearchPrefix
           db_table: !Ref DBTableName
+          group_claim_name: !Ref GroupClaimName
       Role: !GetAtt 
         - LambdaIdentityBrokerRole
         - Arn
@@ -965,6 +987,7 @@ Resources:
         Variables:
           search_prefix: !Ref SearchPrefix
           db_table: !Ref DBTableName
+          group_claim_name: !Ref GroupClaimName
       Role: !GetAtt 
         - LambdaIdentityBrokerRole
         - Arn

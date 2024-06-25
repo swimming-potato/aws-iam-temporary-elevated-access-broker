@@ -33,7 +33,7 @@ def deep_get(d, keys, default=None):
     return deep_get(d.get(keys[0]), keys[1:], default)
 
 
-# ********** Query METHODS ************#
+# ********** Query METHODS ************* #
 
 def get_requests(event, context):
     loader = DatabaseLoader()
@@ -157,7 +157,8 @@ class DatabaseLoader:
             idToken = AuthHeader[len('Bearer '):]
             idTokenSplit = idToken.split(' ', 1)[-1]
             decodedToken = jwt.decode(idTokenSplit, algorithms=["RS256"], options={"verify_signature": False})
-            groups = decodedToken['groups']
+            groupsClaimName = os.environ['group_claim_name']
+            groups = decodedToken[groupsClaimName]
             requester = decodedToken['email']
             reviewerGroup = os.environ['reviewer_group'] 
             epochTimeNow = int(time.time()) 
@@ -196,7 +197,8 @@ class DatabaseLoader:
             idToken = AuthHeader[len('Bearer '):]
             idTokenSplit = idToken.split(' ', 1)[-1]
             decodedToken = jwt.decode(idTokenSplit, algorithms=["RS256"], options={"verify_signature": False})
-            groups = decodedToken['groups']
+            groupsClaimName = os.environ['group_claim_name']
+            groups = decodedToken[groupsClaimName]
             reviewer = decodedToken['email']
             reviewerGroup = os.environ['reviewer_group'] 
             if reviewerGroup in groups:
@@ -246,7 +248,8 @@ class DatabaseLoader:
             idTokenSplit = idToken.split(' ', 1)[-1]
             decodedToken = jwt.decode(idTokenSplit, algorithms=["RS256"], options={"verify_signature": False})
             reviewer = decodedToken['email']
-            groups = decodedToken['groups']
+            groupsClaimName = os.environ['group_claim_name']
+            groups = decodedToken[groupsClaimName]
             auditorGroup = os.environ['auditor_group'] 
             if auditorGroup in groups:
                 epochTimeNow = int(time.time())
@@ -342,7 +345,8 @@ class DatabaseLoader:
                 idTokenSplit = idToken.split(' ', 1)[-1]
                 decodedToken = jwt.decode(idTokenSplit, algorithms=["RS256"], options={"verify_signature": False})
                 reviewer = decodedToken['email']
-                groups = decodedToken['groups']
+                groupsClaimName = os.environ['group_claim_name']
+                groups = decodedToken[groupsClaimName]
                 reviewerGroup = os.environ['reviewer_group'] 
                 now = datetime.now().strftime('%x %X')
                 epochTimeNow = int(time.time()) 
@@ -406,7 +410,8 @@ class DatabaseLoader:
                 idTokenSplit = idToken.split(' ', 1)[-1]
                 decodedToken = jwt.decode(idTokenSplit, algorithms=["RS256"], options={"verify_signature": False})
                 reviewer = decodedToken['email']
-                groups = decodedToken['groups']
+                groupsClaimName = os.environ['group_claim_name']
+                groups = decodedToken[groupsClaimName]
                 reviewerGroup = os.environ['reviewer_group'] 
                 epochTimeNow = int(time.time())
                 dynamodb = boto3.resource('dynamodb')
@@ -513,7 +518,8 @@ class DatabaseLoader:
             decodedToken = jwt.decode(idTokenSplit, algorithms=["RS256"], options={"verify_signature": False})
             requester = decodedToken['email']
             print("Elevation request initiated by " +  requester + " for Account:" + account + " Role:" + role)
-            groups = decodedToken['groups']
+            groupsClaimName = os.environ['group_claim_name']
+            groups = decodedToken[groupsClaimName]
             print("idToken for " + requester + " contains the following groups " + str(groups))
             SearchPrefix = os.environ['search_prefix']
             groups = [x for x in groups if x.startswith(SearchPrefix)]
@@ -597,7 +603,8 @@ class DatabaseLoader:
             decodedToken = jwt.decode(idTokenSplit, algorithms=["RS256"], options={"verify_signature": False})
             requester = decodedToken['email']
             print("Elevation request initiated by " +  requester + " for Account:" + account + " Role:" + role)
-            groups = decodedToken['groups']
+            groupsClaimName = os.environ['group_claim_name']
+            groups = decodedToken[groupsClaimName]
             print("idToken for " + requester + " contains the following groups " + str(groups))
             SearchPrefix = os.environ['search_prefix']
             groups = [x for x in groups if x.startswith(SearchPrefix)]

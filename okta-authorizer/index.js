@@ -1,6 +1,7 @@
 var apiARN = process.env.api_ARN;
 var apiStage = process.env.api_stage;
 var jwtIssuer = process.env.jwt_issuer;
+var jwksUri = process.env.jwks_uri;
 var clientId = process.env.clientId;
 var audience = process.env.aud;
 
@@ -58,13 +59,19 @@ async function verifyIdToken(idToken) {
 
   const oktaJwtVerifier = new OktaJwtVerifier({
     issuer: jwtIssuer,  // issuer required
-    clientId: clientId
+    clientId: clientId,
+		jwksUri: jwksUri,
   });
   
   const jwt = oktaJwtVerifier.verifyIdToken(idToken, clientId, nonce)
   .then( jwt => {
+
+		if(jwt.claims.aud !== audience){
+			throw new Error(`audience claim ${jwt.claims.aud} does not match expected audience:${audience}` )
+		}
     // the token is valid 
     console.log(jwt.claims);
+
     console.log('Verified IdToken');
     return jwt;
   })
@@ -80,12 +87,13 @@ async function verifyAccessToken(accessToken) {
   const oktaJwtVerifier = new OktaJwtVerifier({
     issuer: jwtIssuer,  // issuer required
     clientId: clientId,
+		jwksUri: jwksUri,
     assertClaims: {
       cid: clientId
     }
   });
   
-  const jwt = oktaJwtVerifier.verifyAccessToken(accessToken, audience)
+  const jwt = oktaJwtVerifier.verifyAccessToken(accessToken)
   .then( jwt => {
     // the token is valid 
     console.log(jwt.claims);
@@ -123,11 +131,7 @@ exports.handler = async function(event, context) {
   // Capture raw token and trim 'Bearer ' string, if present
   const idToken = event.authorizationToken.split(" ")[2];
   const accessToken = event.authorizationToken.split(" ")[1];
-  // Validate token
-  await verifyAccessToken(accessToken).then(data => {
-    // Retrieve token scopes
-    const scopeClaims = data.claims.scp;
-  })
+  // Validate id token only. Okta requires aud in access token which is not pressent in Cognito issued access token
   await verifyIdToken(idToken).then(data => {
     // Retrieve token scopes
     const scopeClaims = data.claims.scp;
