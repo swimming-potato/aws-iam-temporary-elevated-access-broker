@@ -189,15 +189,13 @@ When users authenticate, the app UI receives two signed tokens from the identity
 * The *access token* grants the browser application delegated authority to call back-end APIs on behalf of the user
 * The *ID token* contains claims representing the authenticated user's attributes and group memberships
 
-The app UI passes both tokens to the API endpoints where they validated by a Lambda authorizer. 
+The app UI passes **ID token** token to the API endpoints where they validated by a Lambda authorizer. 
 
-If you are using Okta as your identity provider, you will need the following prerequisites:
+If you are using Cognito as your identity provider, you will need the following prerequisites:
 
-* An Okta account:
-    * To create a Developer Account to use in a non-production environment, sign up at https://developer.okta.com/signup/
-* An Okta Application, configured for Single-Page App (SPA) mode:
-    * This is done from the Okta Developer Console, you can see the [OIDC SPA Setup Instructions](https://developer.okta.com/docs/guides/implement-auth-code-pkce/overview/)
-* In your Okta Application, make note of the following information from the Okta Developer Console:
+* An Amazon Cognito User Pool:
+    * To create a User Pool and Hosted UI, with App Integration fallow the guid described on the page]https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-app-integration.html. The solution uses **Authorization code** grant only. You can skip the **implicit**.
+* On the User Pool, make note of the following information from the AWS Console:
     * **Client Id**: The client ID of the SPA application you created. This can be found on the "General" tab of an application, or the list of applications. This identifies the application that tokens will be minted for.
     * **Issuer**: This is the URL of the authorization server that will perform authentication. All Developer Accounts have a "default" authorization server. The issuer is a combination of your Org URL (found in the upper right of the console home page) and `/oauth2/default`. For example, https://dev-1234.oktapreview.com/oauth2/default.
     * **Audience**: The expected audience passed to verifyAccessToken(). This can be either a string (direct match) or an array of strings (the actual `aud` claim in the token must match one of the strings). In the general case, the `aud` value is an array of case sensitive strings, each containing a `StringOrURI` value. Currently, Okta supports only one audience. See [API Access Management with Okta](https://developer.okta.com/docs/concepts/api-access-management/) for additional information. 
