@@ -3,12 +3,14 @@ import {BrowserRouter as Router, Route, useHistory} from 'react-router-dom';
 import NorthStarThemeProvider from 'aws-northstar/components/NorthStarThemeProvider';
 import AppLayout from "./components/AppLayout";
 import { Amplify } from 'aws-amplify';
-import {HomepageContent} from "./components/home/HomePageContent";
+import {HomepageContent} from "./components/Home/HomePageContent";
 import RequestDashboard from "./components/Request/RequestDashboard";
 import ReviewDashboard from "./components/Review/ReviewDashboard";
 import AuditDashboard from "./components/Audit/AuditDashboard";
 import RequestForm from "./components/Request/RequestForm";
 import LogoffForm from "./components/Logoff/Logoff";
+import Login from "./components/Login/Login";
+import { Authenticator }from "./components/Authentication/Authenticator";
 
 
 Amplify.configure({
@@ -45,6 +47,8 @@ const withLayout = (Component: ComponentType): FunctionComponent => (props) => (
 const App = () => {
   const history = useHistory();
 
+
+
 /*
   const restoreOriginalUri = (_oktaAuth:any, originalUri:any) => {
     history.replace(toRelativeUrl(originalUri, window.location.origin));
@@ -55,12 +59,15 @@ const App = () => {
   return (
       <NorthStarThemeProvider>
         <Router>
-            <Route exact path='/' component={withLayout(HomepageContent)}></Route>
-            <Route exact path='/Request-dashboard' component={withLayout(RequestDashboard)}/>
-            <Route exact path='/Review-dashboard' component={withLayout(ReviewDashboard)}/>
-            <Route exact path='/Audit-dashboard' component={withLayout(AuditDashboard)}/>
-            <Route exact path='/Create-request' component={withLayout(RequestForm)}/>
-            <Route exact path='/Logoff' component={withLayout(LogoffForm)}></Route>
+						<Authenticator>
+							<Route exact path='/' component={withLayout(HomepageContent)}></Route>
+							<Route exact path='/Request-dashboard' component={withLayout(RequestDashboard)}/>
+							<Route exact path='/Review-dashboard' component={withLayout(ReviewDashboard)}/>
+							<Route exact path='/Audit-dashboard' component={withLayout(AuditDashboard)}/>
+							<Route exact path='/Create-request' component={withLayout(RequestForm)}/>
+							<Route exact path='/Logoff' component={withLayout(LogoffForm)}></Route>
+							<Route exact path='/Login' component={withLayout(Login)}></Route>
+						</Authenticator>
         </Router>
       </NorthStarThemeProvider>
       

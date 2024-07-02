@@ -1,14 +1,15 @@
 import React, {FunctionComponent, useEffect} from 'react';
+
 import {useAuthentication} from '../Authentication/Authenticator';
+
 
 const LogoffForm: FunctionComponent = () => {
 
-	const {signOut} = useAuthentication();
+	const {signInWithRedirect} = useAuthentication();
 
 
   useEffect( () => {
-		signOut();
-		
+		signInWithRedirect();
   });
 
   return <div />

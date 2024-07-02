@@ -33,6 +33,7 @@ export interface IUserInfo {
   requester: boolean;
   reviewer: boolean;
   auditor: boolean;
+	isLogged: boolean;
 
   accountMap: Map<any, any>;
 }

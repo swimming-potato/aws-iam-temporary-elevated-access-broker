@@ -1,16 +1,39 @@
 # A minimal reference implementation for temporary elevated access
 
-This is a minimal reference implementation for providing temporary elevated access to your AWS environment.
+This is modification of reference implementation for providing temporary elevated access to your AWS environment. The modification results from integrating the solution with Amazon Cognito. Functional wise, the solution allows to swtich between reviewer acceppting requests and auto approval request mechanism.
+
+
+The original implementation can be found [here](https://github.com/aws-samples/aws-iam-temporary-elevated-access-broker).
 
 For a high-level overview of temporary elevated access, including a walk through for this reference implementation, see the blog post [Managing temporary elevated access to your AWS environment](https://aws.amazon.com/blogs/security/managing-temporary-elevated-access-to-your-aws-environment/) on the AWS Security Blog.
 
 ## Contents
 
+* [Difference from the original solution](#differences-)
 * [Deploying the solution](#deploying-the-solution)
 * [Using the solution](#using-the-solution)
 * [Extending the solution](#extending-the-solution)
 * [Security considerations](#security-considerations)
 * [Design principles](#design-principles)
+
+
+## Differences
+
+## Frontend 
+
+* The home page does not contain an architecture diagram, and walkthrough text.
+* [Okta Auth JS](https://github.com/okta/okta-auth-js) used previously was replaced with [Auth](https://docs.amplify.aws/react/build-a-backend/auth/) package from [Amplify JS](https://github.com/aws-amplify/amplify-js).
+* All the React components use Redux state to detect a user permissions and user status.
+
+### Backend
+
+* NodeJS functions has been update to use latest long support version of Node 20.0
+* AWS Lambda authorizer does not check the access token. The reason is that `aud` claim Amazon Conito issues in *access token* treating it only as way of getting *ID Token*
+* AWS Lambda authorizer reads the JWKS.json location from `jwks_uri` environemnt variable.
+* In `create_request` Lambda a new environmnet parameter `auto_approve` has been added. The parameter controls the approving process. When set to *true* request are automatically approved during request creation. Otherwise, each request needs to be approved by a user with *Reviewer* permissions.
+* The name of claim that contains group membershipt has been parametrized through `group_claim_name` environment variable.
+
+The solution does not deploy *User Pool* it needs to be set-up. This document gives walkthrough how it can be done manually using AWS Console.
 
 ## Deploying the solution
 
@@ -128,13 +151,15 @@ Using the **packaged-template.yaml** file generated in the previous step, you ca
     1. **Group setup**
         1. **SearchPrefix:** Group search prefix (i.e. *aws-temp*). All groups should be created with this prefix to simplify the identification of roles in AWS that are accessed through the federated authentication process.
         2. **ReviewerGroup**: Group for determining *Reviewer* authorization.
-        3. **AuditorGroup**: Group for determining *Auditor* authorization.        
+        3. **AuditorGroup**: Group for determining *Auditor* authorization.
+				4. **GroupClaimName**: Name of the claim that will store groups information.
     2. **API Gateway setup**
         1. **Stage:** The stage where the application is running in, e.g. *dev*, *prod*.        
-    3. **Okta setup**
+    3. **Cognito setup**
         1. **ClientId:** The client ID of the SPA application. This can be found on the "General" tab of an application, or the list of applications. This identifies the application that tokens will be minted for. See [Integrating with your identity provider](#integrating-with-your-identity-provider), below.
         2. **JWTIssuer:** This is the URL of the authorization server that will perform authentication. All Developer Accounts have a "default" authorization server. The issuer is a combination of your Org URL (found in the upper right of the console home page) and `/oauth2/default`. For example, https://dev-1234.oktapreview.com/oauth2/default.
-        3. **Audience:** The expected audience passed to verifyAccessToken(). This can be either a string (direct match) or an array of strings (the actual aud claim in the token must match one of the strings). See [API Access Management with Okta](https://developer.okta.com/docs/concepts/api-access-management/) for additional information.         
+        3. **Audience:** The expected audience passed to verifyAccessToken(). This can be either a string (direct match) or an array of strings (the actual aud claim in the token must match one of the strings). See [API Access Management with Okta](https://developer.okta.com/docs/concepts/api-access-management/) for additional information.  
+				4. **JWKSUri:** This is the URL of the locations of JWKS Keys to verify the signature of Access and Id Token.  
     4. **Notifications setup**
         1. **ApprovalSNSTopicName**: A name for the SNS topic that will receive the approval notifications. 
         2. **SubscriptionEndPoint**: The endpoint (i.e. email address) for the Amazon SNS topic. Additional subscribers can be added via the [SNS Console](https://docs.aws.amazon.com/sns/latest/dg/sns-create-subscribe-endpoint-to-topic.html)        

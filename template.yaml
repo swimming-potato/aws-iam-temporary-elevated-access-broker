@@ -34,7 +34,7 @@ Metadata:
         Parameters:
           - Stage
       - Label:
-          default: Okta Setup
+          default: Cognito Setup
         Parameters:
           - ClientId
           - JWTIssuer
@@ -158,10 +158,7 @@ Parameters:
     Type: String
     Description: >-
       This is the URL of the authorization server that will perform
-      authentication. All Developer Accounts have a "default" authorization
-      server. The issuer is a combination of your Org URL (found in the upper
-      right of the console home page) and /oauth2/default. For example,
-      https://dev-1234.oktapreview.com/oauth2/default.
+      authentication.
     AllowedPattern: '(?i)https://(.*)'
     ConstraintDescription: Enter a valid HTTPS URL
   JWKSUri:
@@ -785,6 +782,7 @@ Resources:
       Environment:
         Variables:
           db_table: !Ref DBTableName
+          auto_approve: True
           group_claim_name: !Ref GroupClaimName
       TracingConfig:
         Mode: Active
@@ -807,6 +805,7 @@ Resources:
       Environment:
         Variables:
           db_table: !Ref DBTableName
+          auto_approve: True
           group_claim_name: !Ref GroupClaimName
           reviewer_group: !Ref ReviewerGroup
       TracingConfig:
@@ -830,6 +829,7 @@ Resources:
       Environment:
         Variables:
           db_table: !Ref DBTableName
+          auto_approve: True
           group_claim_name: !Ref GroupClaimName
       TracingConfig:
         Mode: Active
@@ -852,6 +852,7 @@ Resources:
       Environment:
         Variables:
           db_table: !Ref DBTableName
+          auto_approve: True
           group_claim_name: !Ref GroupClaimName
       TracingConfig:
         Mode: Active
@@ -874,6 +875,7 @@ Resources:
       Environment:
         Variables:
           db_table: !Ref DBTableName
+          auto_approve: True
           group_claim_name: !Ref GroupClaimName
           reviewer_group: !Ref ReviewerGroup
       TracingConfig:
@@ -897,6 +899,7 @@ Resources:
       Environment:
         Variables:
           db_table: !Ref DBTableName
+          auto_approve: True
           group_claim_name: !Ref GroupClaimName
           auditor_group: !Ref AuditorGroup
       TracingConfig:
@@ -918,6 +921,7 @@ Resources:
         Variables:
           reviewer_group: !Ref ReviewerGroup
           db_table: !Ref DBTableName
+          auto_approve: True
           group_claim_name: !Ref GroupClaimName
       Role: !GetAtt 
         - LambdaDBWriteRole
@@ -941,6 +945,7 @@ Resources:
         Variables:
           reviewer_group: !Ref ReviewerGroup
           db_table: !Ref DBTableName
+          auto_approve: True
           group_claim_name: !Ref GroupClaimName
       Role: !GetAtt 
         - LambdaDBWriteRole
@@ -964,6 +969,7 @@ Resources:
         Variables:
           search_prefix: !Ref SearchPrefix
           db_table: !Ref DBTableName
+          auto_approve: True
           group_claim_name: !Ref GroupClaimName
       Role: !GetAtt 
         - LambdaIdentityBrokerRole
@@ -987,6 +993,7 @@ Resources:
         Variables:
           search_prefix: !Ref SearchPrefix
           db_table: !Ref DBTableName
+          auto_approve: True
           group_claim_name: !Ref GroupClaimName
       Role: !GetAtt 
         - LambdaIdentityBrokerRole
@@ -2309,7 +2316,7 @@ Outputs:
         - !Ref AWS::Region
   JWTIssuer:
     Description: >-
-      OIDC endpoint domain for authorizing against the Okta Org Authorization Server
+      OIDC endpoint domain for authorizing against the Authorization Server
     Value: !Join 
       - ''
       - - 'https://'

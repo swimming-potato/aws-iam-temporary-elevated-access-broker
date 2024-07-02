@@ -53,7 +53,11 @@ export default class ApiHandler {
           });
       if (!response.ok) {
         const error_message:string = await response.json();
-        throw new Error(error_message);
+
+				if(error_message)
+        	throw new Error(error_message);
+				else
+					throw new Error(`Faild to process your request:  ${response.statusText}`);
       }
       return response.json() as Promise<T>;
     }

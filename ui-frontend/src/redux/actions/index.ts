@@ -4,8 +4,12 @@ import {
 
 export enum ActionTypes {
 
-    STORE_USER_INFO = "STORE_USER_INFO"
+    STORE_USER_INFO = "STORE_USER_INFO",
+		CLEAR_USER_INFO = "CLEAR_USER_INFO"
 }
 
 export const storeUserInfoAction = (userInfo:IUserInfo) => (
     { type: ActionTypes.STORE_USER_INFO, userInfo })
+
+	export const clearUserInfo = () => (
+		{ type: ActionTypes.STORE_USER_INFO })

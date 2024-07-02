@@ -12,6 +12,7 @@ let initialState: ReduxState = {
     requester: false,
     reviewer: false,
     auditor: false,
+		isLogged: false,
 
     accountMap: new Map([])
   }
@@ -24,6 +25,22 @@ export const BreakGlassReducer: Reducer<ReduxState> = (state = initialState, act
       return {
         ...state,
         userInfo: action.userInfo
+      };
+    }
+		case ActionTypes.CLEAR_USER_INFO: {
+      return {
+        ...state,
+				userInfo: {
+					token: "",
+					user: "",
+			
+					requester: false,
+					reviewer: false,
+					auditor: false,
+					isLogged: false,
+			
+					accountMap: new Map([])
+				}
       };
     }
 

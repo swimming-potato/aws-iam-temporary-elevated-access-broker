@@ -6,7 +6,7 @@ import StatusIndicator from 'aws-northstar/components/StatusIndicator';
 import Table, { Column } from 'aws-northstar/components/Table';
 import {deleteRequest, getRequests, invokeFederateConsole, invokeFederateCli} from "../../data";
 import {ICredential, IRequest, ReduxRoot} from "../../interfaces";
-import '../home/styles.css';
+import '../Home/styles.css';
 
 import {
   ExpandableSection,
