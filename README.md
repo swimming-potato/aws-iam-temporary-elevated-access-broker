@@ -196,9 +196,11 @@ If you are using Cognito as your identity provider, you will need the following 
 * An Amazon Cognito User Pool:
     * To create a User Pool and Hosted UI, with App Integration fallow the guid described on the page]https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-app-integration.html. The solution uses **Authorization code** grant only. You can skip the **implicit**.
 * On the User Pool, make note of the following information from the AWS Console:
-    * **Client Id**: The client ID of the SPA application you created. This can be found on the "General" tab of an application, or the list of applications. This identifies the application that tokens will be minted for.
-    * **Issuer**: This is the URL of the authorization server that will perform authentication. All Developer Accounts have a "default" authorization server. The issuer is a combination of your Org URL (found in the upper right of the console home page) and `/oauth2/default`. For example, https://dev-1234.oktapreview.com/oauth2/default.
-    * **Audience**: The expected audience passed to verifyAccessToken(). This can be either a string (direct match) or an array of strings (the actual `aud` claim in the token must match one of the strings). In the general case, the `aud` value is an array of case sensitive strings, each containing a `StringOrURI` value. Currently, Okta supports only one audience. See [API Access Management with Okta](https://developer.okta.com/docs/concepts/api-access-management/) for additional information. 
+		* **Token signing key URL**: The URL with the signing keys. This can be found on the main page of your user pool.
+		* **User pool ID** : The user pool id requried for Amplify library. This can be found on the main page of your user pool.
+    * **Client Id**: The client ID of the SPA application you created. This can be found on the "App Integration" tab of the user pool in the "App client list".
+    * **Audience**: Cognito sets the audience to be equal as the **Client Id**. 
+		* **Issuer**:  ? 
 
 ### Creating authorization groups
 
@@ -243,13 +245,13 @@ With this solution, both the access token and ID token are passed in the "Author
 3. Select **Groups** as the **Value type**.
 4. In the **Filter** drop-down box, select **Matches regex** and then enter the following expression as the **Value: .***
 
-The above approach is recommended if you are using only native Okta groups. In order to return both Active Directory and Okta groups in a single OpenID Connect claim, please see [Can we retrieve both Active Directory and Okta groups in OpenID Connect claims?](https://support.okta.com/help/s/article/Can-we-retrieve-both-Active-Directory-and-Okta-groups-in-OpenID-Connect-claims?language=en_US)
+The above approach is recommended if you are using only Cognito Groups. Groups can be created on "Groups" tab on the user pool page.
 
 ### **Creating target roles**
 
 *Target roles* are IAM roles in your AWS target environment that users assume when they invoke temporary elevated access. For example, you might create IAM role **TempAccessRoleS3Admin** in AWS account **111122223333** to allow users to invoke temporary elevated access to fix S3 issues in that account.
 
-If you are using the default authorization model, each target role must correspond to one eligibility group created in the previous section.
+If you are using the default authorization model, each target role must correspond to one eligibility group created in the previous section. Please fallow the instractions under this link https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-user-groups.html#creating-a-new-group-using-the-console.
 
 Each target role must have the following *trust policy:*
 
