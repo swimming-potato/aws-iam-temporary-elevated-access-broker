@@ -1814,7 +1814,7 @@ Resources:
     DependsOn: ApiStage
     Properties:
       Enabled: true
-      Name: !Sub '${AWS::StackName}-API-Key'
+      Name: !Sub '${AWS::StackName}-API-Key-1'
       StageKeys:
         - RestApiId: !Ref ApiGatewayRestApi
           StageName: !Ref Stage

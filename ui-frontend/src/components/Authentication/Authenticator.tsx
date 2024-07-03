@@ -8,7 +8,7 @@ import {
 	clearUserInfo
 } from "../../redux/actions";
 import ApiHandler from "../../common/api";
-import { fetchAuthSession,signInWithRedirect } from "aws-amplify/auth";
+import { fetchAuthSession,signInWithRedirect, signOut  as signOutAuth} from "aws-amplify/auth";
 import {useDispatch,useSelector} from "react-redux";
 import {useHistory} from "react-router-dom";
 
@@ -72,7 +72,6 @@ export function Authenticator(props: Props): JSX.Element  {
 						break;
 					case 'signedOut':
 						signOut();
-						
 						break;
 					case "signInWithRedirect_failure":
 						setError("An error has occurred during the OAuth flow.");
@@ -142,7 +141,7 @@ export const useAuthentication = () => {
   });
 
 	const signOut = () => {
-		signOut();	
+		signOutAuth();	
 	}
 
 	return { user: userInfo, 	signInWithRedirect, signOut} 

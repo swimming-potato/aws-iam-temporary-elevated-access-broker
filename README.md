@@ -24,6 +24,7 @@ For a high-level overview of temporary elevated access, including a walk through
 * The home page does not contain an architecture diagram, and walkthrough text.
 * [Okta Auth JS](https://github.com/okta/okta-auth-js) used previously was replaced with [Auth](https://docs.amplify.aws/react/build-a-backend/auth/) package from [Amplify JS](https://github.com/aws-amplify/amplify-js).
 * All the React components use Redux state to detect a user permissions and user status.
+* Id Token group claim in `ui-frontend/src/components/Authentication/Authenticator.tsx` to *cognito:groups*
 
 ### Backend
 
@@ -141,13 +142,20 @@ The package command will then zip the local code, push it to S3, and output a ne
 
 ### **Deploying the broker**
 
-Using the **packaged-template.yaml** file generated in the previous step, you can now deploy the required serverless resources into the broker account.
+Using the **packaged-template.yaml** file generated in the previous step, you can deploy the required serverless resources into the broker account. Pior deployment you need to set-up Amazon Cognito.
 
-1. Navigate to the AWS CloudFormation console. Choose the US East (N. Virginia) Region, and then choose **Create Stack**. Select **With new resources**.
+1. To create a User Pool and Hosted UI, and App Integration with Hosted UI fallow the guid described on the page]https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-app-integration.html. The solution uses **Authorization code** grant only. You can skip the **implicit**. For time being please use when deploying Hosted UI please use a dummy *Allowed callback URLs*. This will be replaced once Cloud Formation stack has been deployed. When User Pool and App Integration has been deployed please make a note note of the following information from the AWS Console:
+		* **Token signing key URL**: The URL with the signing keys. This can be found on the main page of your user pool.
+		* **User pool ID** : The user pool id requried for Amplify library. This can be found on the main page of your user pool.
+    * **Client Id**: The client ID of the SPA application you created. This can be found on the "App Integration" tab of the user pool in the "App client list".
+    * **Audience**: Cognito sets the audience to be equal as the **Client Id**. 
+		* **Issuer**:  ? 
 
-2. Choose **Upload a template file,** select your CloudFormation stack file, and then choose **Next**.
+2. Navigate to the AWS CloudFormation console. Choose the US East (N. Virginia) Region, and then choose **Create Stack**. Select **With new resources**.
 
-3. Enter the stack name and values for the other parameters, and then choose **Next**. The parameters are defined as follows:
+3. Choose **Upload a template file,** select your CloudFormation stack file, and then choose **Next**.
+
+4. Enter the stack name and values for the other parameters, and then choose **Next**. The parameters are defined as follows:
     1. **Group setup**
         1. **SearchPrefix:** Group search prefix (i.e. *aws-temp*). All groups should be created with this prefix to simplify the identification of roles in AWS that are accessed through the federated authentication process.
         2. **ReviewerGroup**: Group for determining *Reviewer* authorization.
@@ -191,17 +199,6 @@ When users authenticate, the app UI receives two signed tokens from the identity
 
 The app UI passes **ID token** token to the API endpoints where they validated by a Lambda authorizer. 
 
-If you are using Cognito as your identity provider, you will need the following prerequisites:
-
-* An Amazon Cognito User Pool:
-    * To create a User Pool and Hosted UI, with App Integration fallow the guid described on the page]https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-app-integration.html. The solution uses **Authorization code** grant only. You can skip the **implicit**.
-* On the User Pool, make note of the following information from the AWS Console:
-		* **Token signing key URL**: The URL with the signing keys. This can be found on the main page of your user pool.
-		* **User pool ID** : The user pool id requried for Amplify library. This can be found on the main page of your user pool.
-    * **Client Id**: The client ID of the SPA application you created. This can be found on the "App Integration" tab of the user pool in the "App client list".
-    * **Audience**: Cognito sets the audience to be equal as the **Client Id**. 
-		* **Issuer**:  ? 
-
 ### Creating authorization groups
 
 The broker uses role-based access control (RBAC) to authorize users. Determining how you will create and delineate your groups and IAM roles in AWS is crucial to how you secure access to your AWS target environment.
@@ -238,14 +235,11 @@ If you want to change or extend the authorization model used by the broker, see 
 
 OpenID Connect defines a standard set of basic profile Claims. Tokens contain claims that are statements about the subject, such as name, role, or email address. Beyond the default set of claims that are contained in ID tokens and access tokens, you can define your own custom claims. 
 
-With this solution, both the access token and ID token are passed in the "Authorization" header field in the format `Bearer <access-token> <id-token>`. To ensure your ID token contains the Groups claim, please see [Add a Groups claim for a Custom Authorization Server](https://developer.okta.com/docs/guides/customize-tokens-groups-claim/add-groups-claim-custom-as/) When configuring the Groups claim, enter the following values: 
+With this solution, both the access token and ID token are passed in the "Authorization" header field in the format `Bearer <access-token> <id-token>`. To ensure your ID token contains the Groups claim, please see [Add a Groups to the User Pool and assign needed group to a user](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-user-groups.html#creating-a-new-group-using-the-console) When configuring the Groups claim, enter the following values: 
 
-1. For the **Name** of the claim, enter **groups**. This is the expected value by the SPA code.
-2. In the **Include in token type section** select **ID Token** and select **Always**.
-3. Select **Groups** as the **Value type**.
-4. In the **Filter** drop-down box, select **Matches regex** and then enter the following expression as the **Value: .***
-
-The above approach is recommended if you are using only Cognito Groups. Groups can be created on "Groups" tab on the user pool page.
+1. For the **Group Name** enter value that was used as a group paremeters to Cloud Formation
+2. In **Description - optional** put meaningfull name
+3. **Precedence** and **IAM role** - please leave empty.
 
 ### **Creating target roles**
 
@@ -286,15 +280,33 @@ After you successfully deploy the solution using the steps in the previous secti
 * Navigate to the `/ui-frontend` folder of the cloned repo and make the following updates:
     * **src/App.tsx**
       
-        Under the OktaAuth object, replace each of these property values with ones from your Okta org and application. For more information about these properties, see the [Client Configuration section of the Auth SDK reference](https://github.com/okta/okta-auth-js#configuration-reference) For the *RedirectURI*, please refer to the `CloudFrontURL` output value on the deployment template. 
+        Under the Amplify configure function, replace each of these property values with ones from your Amazon Cognito User Pool and App Integration. For more information about these properties, see the [Client Configuration section of the Auth SDK reference]https://docs.amplify.aws/gen1/javascript/build-a-backend/auth/set-up-auth) For the *RedirectURI*, please refer to the `CloudFrontURL` output value on the deployment template. 
         
         ```javascript
-          const oktaAuth = new OktaAuth({
-            issuer: 'https://<yourOktaDomain>/oauth2/default',
-            clientId: '<clientId>', 
-            redirectUri: '<CloudFrontURL>', 
-            pkce: true
-          });
+					Amplify.configure({
+						Auth:
+						{
+							Cognito: {
+								userPoolClientId: "<ClientId>",
+								userPoolId: "<UserPool>",
+								// OPTIONAL - Hosted UI configuration
+								loginWith: {
+									oauth: {
+									domain: '<App Integration Hosted UI domain>',
+									scopes: [
+										'email',
+										'profile',
+										'openid',
+									],
+									redirectSignIn: ['<CloudFrontURL>'],
+									redirectSignOut: ['<CloudFrontURL>'],
+									responseType: 'code' // or 'token', note that REFRESH token will only be generated when the responseType is code
+									}
+								},
+							},
+							
+						}
+					});
         ```
         
     * **src/config/index.ts**
