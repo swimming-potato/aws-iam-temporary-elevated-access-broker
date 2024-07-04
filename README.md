@@ -284,30 +284,30 @@ After you successfully deploy the solution using the steps in the previous secti
         Under the Amplify configure function, replace each of these property values with ones from your Amazon Cognito User Pool and App Integration. For more information about these properties, see the [Client Configuration section of the Auth SDK reference]https://docs.amplify.aws/gen1/javascript/build-a-backend/auth/set-up-auth) For the *RedirectURI*, please refer to the `CloudFrontURL` output value on the deployment template. 
         
         ```javascript
-					Amplify.configure({
-						Auth:
-						{
-							Cognito: {
-								userPoolClientId: "<ClientId>",
-								userPoolId: "<UserPoolId>",
-								// OPTIONAL - Hosted UI configuration
-								loginWith: {
-									oauth: {
-									domain: '<App Integration Hosted UI domain>',
-									scopes: [
-										'email',
-										'profile',
-										'openid',
-									],
-									redirectSignIn: ['<CloudFrontURL>'],
-									redirectSignOut: ['<CloudFrontURL>'],
-									responseType: 'code' // or 'token', note that REFRESH token will only be generated when the responseType is code
-									}
-								},
-							},
-							
+		Amplify.configure({
+			Auth:
+			{
+				Cognito: {
+					userPoolClientId: "<ClientId>",
+					userPoolId: "<UserPoolId>",
+					// OPTIONAL - Hosted UI configuration
+					loginWith: {
+						oauth: {
+						domain: '<App Integration Hosted UI domain>',
+						scopes: [
+							'email',
+							'profile',
+							'openid',
+						],
+						redirectSignIn: ['<CloudFrontURL>'],
+						redirectSignOut: ['<CloudFrontURL>'],
+						responseType: 'code' // or 'token', note that REFRESH token will only be generated when the responseType is code
 						}
-					});
+					},
+				},
+				
+			}
+		});
         ```
         
     * **src/config/index.ts**
@@ -367,7 +367,7 @@ After you successfully deploy the solution using the steps in the previous secti
         ```javascript
         <html lang="en">
             <head>
-              <meta http-equiv="Content-Security-Policy" content="default-src 'self' <CloudFrontURL> <JWTIssuer>; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' ">
+              <meta http-equiv="Content-Security-Policy" content="default-src 'self' <CloudFrontURL> <JWTIssuer> <App Integration Hosted UI domain>; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' ">
               <meta charset="utf-8" />
         ```
     
