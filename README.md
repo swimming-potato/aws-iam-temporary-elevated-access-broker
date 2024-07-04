@@ -1,6 +1,6 @@
 # A minimal reference implementation for temporary elevated access
 
-This is modification of reference implementation for providing temporary elevated access to your AWS environment. The modification results from integrating the solution with Amazon Cognito. Functional wise, the solution allows to swtich between reviewer acceppting requests and auto approval request mechanism.
+This isa  modification of reference implementation for providing temporary elevated access to your AWS environment. The modification results from integrating the solution with Amazon Cognito. Functional wise, the solution allows to swtich between reviewer acceppting requests and auto approval request mechanism.
 
 
 The original implementation can be found [here](https://github.com/aws-samples/aws-iam-temporary-elevated-access-broker).
@@ -33,6 +33,7 @@ For a high-level overview of temporary elevated access, including a walk through
 * AWS Lambda authorizer reads the JWKS.json location from `jwks_uri` environemnt variable.
 * In `create_request` Lambda a new environmnet parameter `auto_approve` has been added. The parameter controls the approving process. When set to *true* request are automatically approved during request creation. Otherwise, each request needs to be approved by a user with *Reviewer* permissions.
 * The name of claim that contains group membershipt has been parametrized through `group_claim_name` environment variable.
+* A new e-mail template for auto approve case has been added.
 
 The solution does not deploy *User Pool* it needs to be set-up. This document gives walkthrough how it can be done manually using AWS Console.
 
@@ -149,7 +150,7 @@ Using the **packaged-template.yaml** file generated in the previous step, you ca
 		* **User pool ID** : The user pool id requried for Amplify library. This can be found on the main page of your user pool.
     * **Client Id**: The client ID of the SPA application you created. This can be found on the "App Integration" tab of the user pool in the "App client list".
     * **Audience**: Cognito sets the audience to be equal as the **Client Id**. 
-		* **Issuer**:  ? 
+		* **Issuer**: his is the URL of the authorization server that issues the tokens.
 
 2. Navigate to the AWS CloudFormation console. Choose the US East (N. Virginia) Region, and then choose **Create Stack**. Select **With new resources**.
 
@@ -165,8 +166,8 @@ Using the **packaged-template.yaml** file generated in the previous step, you ca
         1. **Stage:** The stage where the application is running in, e.g. *dev*, *prod*.        
     3. **Cognito setup**
         1. **ClientId:** The client ID of the SPA application. This can be found on the "General" tab of an application, or the list of applications. This identifies the application that tokens will be minted for. See [Integrating with your identity provider](#integrating-with-your-identity-provider), below.
-        2. **JWTIssuer:** This is the URL of the authorization server that will perform authentication. All Developer Accounts have a "default" authorization server. The issuer is a combination of your Org URL (found in the upper right of the console home page) and `/oauth2/default`. For example, https://dev-1234.oktapreview.com/oauth2/default.
-        3. **Audience:** The expected audience passed to verifyAccessToken(). This can be either a string (direct match) or an array of strings (the actual aud claim in the token must match one of the strings). See [API Access Management with Okta](https://developer.okta.com/docs/concepts/api-access-management/) for additional information.  
+        2. **JWTIssuer:** This is the URL of the authorization server that issues the tokens.
+        3. **Audience:** The audience claim that will be validate by the authorizer. The value should be same as ClientId 
 				4. **JWKSUri:** This is the URL of the locations of JWKS Keys to verify the signature of Access and Id Token.  
     4. **Notifications setup**
         1. **ApprovalSNSTopicName**: A name for the SNS topic that will receive the approval notifications. 
@@ -288,7 +289,7 @@ After you successfully deploy the solution using the steps in the previous secti
 						{
 							Cognito: {
 								userPoolClientId: "<ClientId>",
-								userPoolId: "<UserPool>",
+								userPoolId: "<UserPoolId>",
 								// OPTIONAL - Hosted UI configuration
 								loginWith: {
 									oauth: {
@@ -397,17 +398,12 @@ After you successfully deploy the solution using the steps in the previous secti
 
     This takes the contents of the build directory (produced by `npm run build`) and replaces whatever is currently in your bucket with those contents. For the `<ContentBucketName>`, please refer to the *ContentBucketName* output value on the deployment template. 
 
-### Enabling CORS
+### Cores CORS
 [Cross-Origin Resource Sharing](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) (CORS) is a mechanism that allows a web page to make an AJAX call using XMLHttpRequest (XHR) to a domain that is different than the domain where the script was loaded.
 
-In Okta, CORS allows JavaScript hosted on your SPA to make a request using XMLHttpRequest to the Okta API with the Okta security token. Every website origin must be explicitly permitted as a Trusted Origin. In order to grant cross-origin access in Okta, please follow the steps below:
+The Amazon Cognito hosted UI doesn't support custom cross-origin resource sharing (CORS) origin policies. A CORS policy in the hosted UI would prevent users from passing authentication parameters in their requests. Instead, implement a CORS policy in the web frontend of your app. Amazon Cognito returns an Access-Control-Allow-Origin: * response header to requests to the following OAuth endpoints.
 
-1. On the Okta Dashboard, select **Security** and then **API**.
-2. Select the **Trusted Origins** tab.
-3. Select **Add Origin** and then enter a name for the organization origin, i.e. *TemporaryElevatedAccessBroker*.
-4. In the **Origin URL** box, specify the base URL of the CloudFront website that you want to allow cross-origin requests from.
-5. Make sure that **CORS** is selected as the **Type**. You can also enable the Redirect setting, which allows for redirection to this Trusted Origin after a user signs in or out.
-6. Click **Save**.
+
 
 ## Using the solution
 
@@ -496,14 +492,14 @@ By default, the reference implementation works with Cognito as the identity prov
 
 If you are using a different identity provider, you will need to make the following modifications: 
 
-* *Optional*: replace the Okta OIDC client library with one that is approved for use in your organization
+* *Optional*: replace the Amplify Auth package with OIDC client library with one that is approved for use in your organization
 * Configure the identity provider to use OpenID Connect with Authorization Code Flow with PKCE
 * Configure the identity provider to add Groups claims to the ID tokens
 * Update the [Lambda authorizer](https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-use-lambda-authorizer.html) to use your custom Identity Provider
     * For instructions on building and packaging a Lambda authorizer, please see the following documentation:
         https://aws.amazon.com/blogs/security/use-aws-lambda-authorizers-with-a-third-party-identity-provider-to-secure-amazon-api-gateway-rest-apis/
 
-You will also need to update the following files in UI package to replace the Okta related implementation with corresponding code for your identity provider of choice:
+You will also need to update the following files in UI package to replace the Cognito related implementation with corresponding code for your identity provider of choice:
 
 - App.tsx
 - Components/home/HomePageContext.tsx

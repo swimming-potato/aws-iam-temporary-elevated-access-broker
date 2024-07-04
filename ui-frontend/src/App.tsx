@@ -17,19 +17,18 @@ Amplify.configure({
 	Auth:
 	{
 		Cognito: {
-			userPoolClientId: "3of948ccoaeep0tsh1dracu12b",
-			userPoolId: "us-east-1_yB68XVcak",
-			// OPTIONAL - Hosted UI configuration
+			userPoolClientId: "<ClientId>",
+			userPoolId: "<UserPoolId>",
 			loginWith: {
 				oauth: {
-				domain: 'broker-test-witek.auth.us-east-1.amazoncognito.com',
+				domain: '<App Integration Hosted UI domain>',
 				scopes: [
 					'email',
 					'profile',
 					'openid',
 				],
-				redirectSignIn: ['https://dkjxr61d2pssw.cloudfront.net'],
-				redirectSignOut: ['https://dkjxr61d2pssw.cloudfront.net'],
+				redirectSignIn: ['<CloudFrontURL>'],
+				redirectSignOut: ['<CloudFrontURL>'],
 				responseType: 'code' // or 'token', note that REFRESH token will only be generated when the responseType is code
 				}
 			},
