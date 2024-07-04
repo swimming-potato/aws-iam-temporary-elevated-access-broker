@@ -47,7 +47,7 @@ The solution comprises a *temporary elevated access broker*, which includes the 
 * Server-side APIs hosted by Amazon API Gateway and AWS Lambda
 * A DynamoDB table to track the status of temporary elevated access requests
 
-![](ui-frontend/src/components/home/TEA.png)
+![](ui-frontend/src/components/Home/TEA.png)
 
 The broker users your existing identity provider to authenticate users. It conditionally grants those users time-bound access to your AWS environment (the "AWS target environment") by allowing them to assume specially configured IAM roles ("target roles").
 
@@ -492,7 +492,7 @@ In this approach, you need to be careful to protect the integrity of the session
 
 ### Using a different identity provider
 
-By default, the reference implementation works with Okta as the identity provider.
+By default, the reference implementation works with Cognito as the identity provider.
 
 If you are using a different identity provider, you will need to make the following modifications: 
 
